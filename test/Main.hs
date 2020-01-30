@@ -1,10 +1,10 @@
 module Main where
 
-import Test.Tasty
 import Data.Bytes
+import Data.WideWord.Word128
+import Test.Tasty
 import Test.Tasty.HUnit
 import UUID
-import Data.WideWord.Word128
 
 main :: IO ()
 main = defaultMain tests
