@@ -16,14 +16,14 @@ extra-source-files: CHANGELOG.md
 library
   -- other-modules:
   -- other-extensions:
-  ghc-options: -Wall
+  ghc-options: -Wall -O2
   exposed-modules:
     UUID
   build-depends: 
       base >=4.13 && <4.14
     , wide-word
     , byteslice >=0.2.1 && <0.3
-    , bytesmith >=0.3.3 && <0.4
+    , bytesmith >=0.3.4 && <0.4
     , primitive
     , small-bytearray-builder
     , natural-arithmetic

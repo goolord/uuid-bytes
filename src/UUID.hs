@@ -61,31 +61,27 @@ decodeHyphenated uuid = parseBytesMaybe (parserHyphenated ()) uuid
 -- | Parser type from @bytesmith@
 parserHyphenated :: e -> Parser e s Word128
 parserHyphenated err = do
-  w1 <- hexFixedWord16 err
+  w1 <- hexFixedWord32 err
+  skipChar1 err '-'
   w2 <- hexFixedWord16 err
   skipChar1 err '-'
   w3 <- hexFixedWord16 err
   skipChar1 err '-'
   w4 <- hexFixedWord16 err
   skipChar1 err '-'
-  w5 <- hexFixedWord16 err
-  skipChar1 err '-'
+  w5 <- hexFixedWord32 err
   w6 <- hexFixedWord16 err
-  w7 <- hexFixedWord16 err
-  w8 <- hexFixedWord16 err
   pure $ Word128
-    { word128Hi64 = fromWord16sWord64 w1 w2 w3 w4
-    , word128Lo64 = fromWord16sWord64 w5 w6 w7 w8
+    { word128Hi64 = fromW32W16Word64 w1 w2 w3
+    , word128Lo64 = fromW16W32W16Word64 w4 w5 w6
     }
 
-fromWord16sWord64 ::
-     Word16 -> Word16 -> Word16 -> Word16
+fromWord32sWord64 ::
+     Word32 -> Word32
   -> Word64
-fromWord16sWord64 e f g h =
-      shiftL (fromIntegral e) 48
-  .|. shiftL (fromIntegral f) 32
-  .|. shiftL (fromIntegral g) 16
-  .|. (fromIntegral h)
+fromWord32sWord64 x y = 
+      shiftL (fromIntegral x) 32
+  .|. (fromIntegral y)
 
 toWord16s :: Word128 -> (Word16,Word16,Word16,Word16,Word16,Word16,Word16,Word16)
 toWord16s (Word128 a b) =
@@ -103,17 +99,13 @@ toWord16s (Word128 a b) =
 
 parserUnhyphenated :: e -> Parser e s Word128
 parserUnhyphenated err = do
-  w1 <- hexFixedWord16 err
-  w2 <- hexFixedWord16 err
-  w3 <- hexFixedWord16 err
-  w4 <- hexFixedWord16 err
-  w5 <- hexFixedWord16 err
-  w6 <- hexFixedWord16 err
-  w7 <- hexFixedWord16 err
-  w8 <- hexFixedWord16 err
+  w1 <- hexFixedWord32 err
+  w2 <- hexFixedWord32 err
+  w3 <- hexFixedWord32 err
+  w4 <- hexFixedWord32 err
   pure $ Word128
-    { word128Hi64 = fromWord16sWord64 w1 w2 w3 w4
-    , word128Lo64 = fromWord16sWord64 w5 w6 w7 w8
+    { word128Hi64 = fromWord32sWord64 w1 w2
+    , word128Lo64 = fromWord32sWord64 w3 w4
     }
 
 decodeUnhyphenated :: Bytes -> Maybe Word128
@@ -137,24 +129,33 @@ encodeUnhyphenated uuid = run constant (builderUnhyphenated uuid)
 
 parserLenient :: e -> Parser e s Word128
 parserLenient err = do
-  w1 <- hexFixedWord16 err
+  w1 <- hexFixedWord32 err
+  skipChar '-'
   w2 <- hexFixedWord16 err
   skipChar '-'
   w3 <- hexFixedWord16 err
   skipChar '-'
   w4 <- hexFixedWord16 err
   skipChar '-'
-  w5 <- hexFixedWord16 err
-  skipChar '-'
+  w5 <- hexFixedWord32 err
   w6 <- hexFixedWord16 err
-  w7 <- hexFixedWord16 err
-  w8 <- hexFixedWord16 err
   pure $ Word128
-    { word128Hi64 = fromWord16sWord64 w1 w2 w3 w4
-    , word128Lo64 = fromWord16sWord64 w5 w6 w7 w8
+    { word128Hi64 = fromW32W16Word64 w1 w2 w3
+    , word128Lo64 = fromW16W32W16Word64 w4 w5 w6
     }
 
 -- | decodes uuid with out without hyphens
 decodeLenient :: Bytes -> Maybe Word128
 decodeLenient uuid = parseBytesMaybe (parserLenient ()) uuid
 
+fromW32W16Word64 :: Word32 -> Word16 -> Word16 -> Word64
+fromW32W16Word64 a b c =
+      shiftL (fromIntegral a) 32
+  .|. shiftL (fromIntegral b) 16
+  .|. (fromIntegral c)
+
+fromW16W32W16Word64 :: Word16 -> Word32 -> Word16 -> Word64
+fromW16W32W16Word64 a b c = 
+      shiftL (fromIntegral a) 48
+  .|. shiftL (fromIntegral b) 16
+  .|. (fromIntegral c)
