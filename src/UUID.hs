@@ -40,20 +40,18 @@ encodeHyphenated uuid = run constant (builderHyphenated uuid)
 
 builderHyphenated :: Word128 -> Builder 36
 builderHyphenated uuid = 
-           word16PaddedLowerHex w1
+           word32PaddedLowerHex w1
+  `append` ascii '-'
   `append` word16PaddedLowerHex w2
   `append` ascii '-'
   `append` word16PaddedLowerHex w3
   `append` ascii '-'
   `append` word16PaddedLowerHex w4
   `append` ascii '-'
-  `append` word16PaddedLowerHex w5
-  `append` ascii '-'
+  `append` word32PaddedLowerHex w5
   `append` word16PaddedLowerHex w6
-  `append` word16PaddedLowerHex w7
-  `append` word16PaddedLowerHex w8
   where
-  (w1,w2,w3,w4,w5,w6,w7,w8) = toWord16s uuid
+  (w1,w2,w3,w4,w5,w6) = toWords uuid
 
 decodeHyphenated :: Bytes -> Maybe Word128
 decodeHyphenated uuid = parseBytesMaybe (parserHyphenated ()) uuid
@@ -76,53 +74,29 @@ parserHyphenated err = do
     , word128Lo64 = fromW16W32W16Word64 w4 w5 w6
     }
 
-fromWord32sWord64 ::
-     Word32 -> Word32
-  -> Word64
-fromWord32sWord64 x y = 
-      shiftL (fromIntegral x) 32
-  .|. (fromIntegral y)
-
-toWord16s :: Word128 -> (Word16,Word16,Word16,Word16,Word16,Word16,Word16,Word16)
-toWord16s (Word128 a b) =
+toWords :: Word128 -> (Word32,Word16,Word16,Word16,Word32,Word16)
+toWords (Word128 a b) =
   -- Note: implementing this as 2 Word64 shifts with 'unsafeShiftR'
   -- is up to 40% faster than using 128-bit shifts on a Word128 value.
-  ( fromIntegral (unsafeShiftR a 48)
-  , fromIntegral (unsafeShiftR a 32)
+  ( fromIntegral (unsafeShiftR a 32)
   , fromIntegral (unsafeShiftR a 16)
   , fromIntegral a
   , fromIntegral (unsafeShiftR b 48)
-  , fromIntegral (unsafeShiftR b 32)
   , fromIntegral (unsafeShiftR b 16)
   , fromIntegral b
   )
 
 parserUnhyphenated :: e -> Parser e s Word128
-parserUnhyphenated err = do
-  w1 <- hexFixedWord32 err
-  w2 <- hexFixedWord32 err
-  w3 <- hexFixedWord32 err
-  w4 <- hexFixedWord32 err
-  pure $ Word128
-    { word128Hi64 = fromWord32sWord64 w1 w2
-    , word128Lo64 = fromWord32sWord64 w3 w4
-    }
+parserUnhyphenated err = 
+      Word128 
+  <$> hexFixedWord64 err
+  <*> hexFixedWord64 err
 
 decodeUnhyphenated :: Bytes -> Maybe Word128
 decodeUnhyphenated uuid = parseBytesMaybe (parserUnhyphenated ()) uuid
 
 builderUnhyphenated :: Word128 -> Builder 32
-builderUnhyphenated uuid = 
-           word16PaddedLowerHex w1
-  `append` word16PaddedLowerHex w2
-  `append` word16PaddedLowerHex w3
-  `append` word16PaddedLowerHex w4
-  `append` word16PaddedLowerHex w5
-  `append` word16PaddedLowerHex w6
-  `append` word16PaddedLowerHex w7
-  `append` word16PaddedLowerHex w8
-  where
-  (w1,w2,w3,w4,w5,w6,w7,w8) = toWord16s uuid
+builderUnhyphenated = word128PaddedLowerHex
 
 encodeUnhyphenated :: Word128 -> ByteArray
 encodeUnhyphenated uuid = run constant (builderUnhyphenated uuid)
