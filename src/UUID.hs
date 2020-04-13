@@ -19,7 +19,7 @@ module UUID
 
 import Arithmetic.Nat
 import Data.Bits
-import Data.ByteArray.Builder.Bounded
+import Data.Bytes.Builder.Bounded
 import Data.Bytes
 import Data.Bytes.Parser
 import Data.Bytes.Parser.Latin
