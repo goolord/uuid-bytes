@@ -1,6 +1,6 @@
 cabal-version: >=1.10
 name: uuid-bytes
-version: 0.1.2.0
+version: 0.1.3.0
 synopsis: UUID parsing using byteverse packages
 description: This packages provides `bytesmith` parsers and `byteslice` encoders for 128bit UUIDs in hexadecimal format.
 -- bug-reports:
